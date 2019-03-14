@@ -1,7 +1,7 @@
 package com.akkahttp.marshallers
 
 import org.zalando.jsonapi.{JsonapiRootObjectReader, JsonapiRootObjectWriter}
-import org.zalando.jsonapi.model.JsonApiObject.{BooleanValue, StringValue, NumberValue}
+import org.zalando.jsonapi.model.JsonApiObject.{BooleanValue, NumberValue, StringValue}
 import org.zalando.jsonapi.model.{Attribute, RootObject}
 import org.zalando.jsonapi.model.RootObject.{ResourceObject, ResourceObjects}
 import com.akkahttp.models.{Book, Cat, CreateCat}
@@ -25,6 +25,14 @@ object JsonApiConverter extends DefaultJsonProtocol {
       }
     }
     ResourceObject(`type` = x.getClass.getSimpleName.toLowerCase + "s", attributes = Some(attrs.toList))
+  }
+
+  def convertFrom(resourceObject: ResourceObject): CreateCat = {
+    resourceObject.toJson.asJsObject.getFields("attributes") match {
+      case Seq(JsObject(x)) => JsObject(x).getFields("name", "age") match {
+        case Seq(JsString(name), JsString(age)) => CreateCat(name.toString, age.toString)
+      }
+    }
   }
 }
 
@@ -60,13 +68,7 @@ object JsonApiSupport{
 
   implicit val createCatJF: JsonapiRootObjectReader[CreateCat] = new JsonapiRootObjectReader[CreateCat] {
     override def fromJsonapi(rootObject: RootObject): CreateCat  = {
-      rootObject.toJson.asJsObject.getFields("data") match {
-        case Seq(JsObject(data)) => JsObject(data).getFields("attributes") match {
-          case Seq(JsObject(x)) => JsObject(x).getFields("name", "age") match {
-            case Seq(JsString(name), JsString(age)) => CreateCat(name.toString, age.toString)
-          }
-        }
-      }
+      rootObject.data.map { case x:ResourceObject => convertFrom(x) }.get
     }
   }
 }
