@@ -25,15 +25,7 @@ object JsonApiConverter {
     ResourceObject(`type` = x.getClass.getSimpleName.toLowerCase + "s", attributes = Some(attrs.toList))
   }
 
-//  def convertFrom[X](resourceObject: ResourceObject)(implicit reader: JsonReader[X]): X = {
-//    val attrs = resourceObject.toJson.asJsObject.getFields("attributes")
-//    attrs match {
-//      case Seq(JsObject(x)) => JsObject(x).convertTo[X]
-//    }
-//  }
-
-
-  def jsonApiWriter[X](implicit reader: JsonWriter[X])= {
+  def jsonApiWriter[X](implicit writer: JsonWriter[X])= {
     new JsonapiRootObjectWriter[X] {
       override def toJsonapi(x: X) = {
         x match {
@@ -42,6 +34,20 @@ object JsonApiConverter {
             RootObject(data = Some(ResourceObjects(resources.toList)), links=None)
           case element:X =>
             RootObject(data = Some(convertTo[X](element)))
+        }
+      }
+    }
+  }
+
+  def jsonApiReader[X](implicit reader: JsonReader[X])= {
+    new JsonapiRootObjectReader[X] {
+      override def fromJsonapi(rootObject: RootObject): X = {
+        import org.zalando.jsonapi.json.sprayjson.SprayJsonJsonapiProtocol._
+        val resourceObject = rootObject.data.map { case x:ResourceObject => x }.get
+
+        val attrs = resourceObject.toJson.asJsObject.getFields("attributes")
+        attrs match {
+          case Seq(JsObject(x)) => JsObject(x).convertTo[X]
         }
       }
     }
@@ -58,9 +64,5 @@ object JsonApiSupport{
   implicit val bookJW = jsonApiWriter[Book]
   implicit val seqBookJW = jsonApiWriter[Seq[Book]]
 
-  implicit val createCatJF: JsonapiRootObjectReader[CreateCat] = new JsonapiRootObjectReader[CreateCat] {
-    override def fromJsonapi(rootObject: RootObject): CreateCat  = {
-      rootObject.data.map { case x:ResourceObject => CreateCat("ss","gg") }.get
-    }
-  }
+  implicit val createCatJF = jsonApiReader[CreateCat]
 }
