@@ -5,11 +5,9 @@ import org.zalando.jsonapi.model.JsonApiObject.{BooleanValue, NumberValue, Strin
 import org.zalando.jsonapi.model.{Attribute, RootObject}
 import org.zalando.jsonapi.model.RootObject.{ResourceObject, ResourceObjects}
 import com.akkahttp.models.{Book, Cat, CreateCat}
-import spray.json.DefaultJsonProtocol
-import org.zalando.jsonapi.json.sprayjson.SprayJsonJsonapiProtocol._
 import spray.json._
 
-object JsonApiConverter extends DefaultJsonProtocol {
+object JsonApiConverter {
   def convertTo[X](x: X): ResourceObject = {
     val fields = (Map[String, Any]() /: x.getClass.getDeclaredFields) { (a, f) =>
       f.setAccessible(true)
@@ -27,10 +25,24 @@ object JsonApiConverter extends DefaultJsonProtocol {
     ResourceObject(`type` = x.getClass.getSimpleName.toLowerCase + "s", attributes = Some(attrs.toList))
   }
 
-  def convertFrom(resourceObject: ResourceObject): CreateCat = {
-    resourceObject.toJson.asJsObject.getFields("attributes") match {
-      case Seq(JsObject(x)) => JsObject(x).getFields("name", "age") match {
-        case Seq(JsString(name), JsString(age)) => CreateCat(name.toString, age.toString)
+//  def convertFrom[X](resourceObject: ResourceObject)(implicit reader: JsonReader[X]): X = {
+//    val attrs = resourceObject.toJson.asJsObject.getFields("attributes")
+//    attrs match {
+//      case Seq(JsObject(x)) => JsObject(x).convertTo[X]
+//    }
+//  }
+
+
+  def jsonApiWriter[X](implicit reader: JsonWriter[X])= {
+    new JsonapiRootObjectWriter[X] {
+      override def toJsonapi(x: X) = {
+        x match {
+          case elements:Seq[X] =>
+            val resources = elements map { element => convertTo[X](element) }
+            RootObject(data = Some(ResourceObjects(resources.toList)), links=None)
+          case element:X =>
+            RootObject(data = Some(convertTo[X](element)))
+        }
       }
     }
   }
@@ -40,35 +52,15 @@ object JsonApiConverter extends DefaultJsonProtocol {
 object JsonApiSupport{
   import JsonApiConverter._
 
-  implicit val catJF: JsonapiRootObjectWriter[Cat] = new JsonapiRootObjectWriter[Cat] {
-    override def toJsonapi(cat: Cat) = {
-      RootObject(data = Some(convertTo[Cat](cat)))
-    }
-  }
-
-  implicit val seqCatJF: JsonapiRootObjectWriter[Seq[Cat]] = new JsonapiRootObjectWriter[Seq[Cat]] {
-    override def toJsonapi(cats: Seq[Cat]) = {
-      val resources = cats map { cat => convertTo[Cat](cat) }
-      RootObject(data = Some(ResourceObjects(resources.toList)), links=None)
-    }
-  }
-
-  implicit val bookJF: JsonapiRootObjectWriter[Book] = new JsonapiRootObjectWriter[Book] {
-    override def toJsonapi(book: Book) = {
-      RootObject(data = Some(convertTo[Book](book)))
-    }
-  }
-
-  implicit val seqBookJF: JsonapiRootObjectWriter[Seq[Book]] = new JsonapiRootObjectWriter[Seq[Book]] {
-    override def toJsonapi(books: Seq[Book]) = {
-      val resources = books map { book => convertTo[Book](book)}
-      RootObject(data = Some(ResourceObjects(resources.toList)), links=None)
-    }
-  }
+  import com.akkahttp.marshallers.JsonSupport._
+  implicit val catJW = jsonApiWriter[Cat]
+  implicit val seqCatJW = jsonApiWriter[Seq[Cat]]
+  implicit val bookJW = jsonApiWriter[Book]
+  implicit val seqBookJW = jsonApiWriter[Seq[Book]]
 
   implicit val createCatJF: JsonapiRootObjectReader[CreateCat] = new JsonapiRootObjectReader[CreateCat] {
     override def fromJsonapi(rootObject: RootObject): CreateCat  = {
-      rootObject.data.map { case x:ResourceObject => convertFrom(x) }.get
+      rootObject.data.map { case x:ResourceObject => CreateCat("ss","gg") }.get
     }
   }
 }
