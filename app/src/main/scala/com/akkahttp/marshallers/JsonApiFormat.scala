@@ -41,8 +41,7 @@ object JsonApiFormat {
             val resources = elements map { element => convertTo[X](element) }
             RootObject(data = Some(ResourceObjects(resources.toList)), links=None)
           case element:X =>
-            val res= element.toJson.convertTo[ResourceObject]
-            RootObject(data = Some(res))
+            RootObject(data = Some(convertTo[X](element)))
         }
       }
       override def fromJsonapi(rootObject: RootObject): X = {
