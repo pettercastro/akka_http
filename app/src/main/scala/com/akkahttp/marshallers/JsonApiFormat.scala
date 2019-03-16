@@ -2,8 +2,8 @@ package com.akkahttp.marshallers
 
 import org.zalando.jsonapi.JsonapiRootObjectFormat
 import org.zalando.jsonapi.json.sprayjson.SprayJsonJsonapiProtocol._
-import org.zalando.jsonapi.model.JsonApiObject.{BooleanValue, NumberValue, StringValue}
 import org.zalando.jsonapi.model.{Attribute, RootObject}
+import org.zalando.jsonapi.model.JsonApiObject.{BooleanValue, NumberValue, StringValue}
 import org.zalando.jsonapi.model.RootObject.{ResourceObject, ResourceObjects}
 import spray.json._
 

@@ -6,6 +6,7 @@ import scala.util.{Failure, Success}
 import akka.http.scaladsl.server.{Directive1, Directives}
 
 trait BookDirectives extends Directives {
+  val errorCode = 400
 
   def handle[T]
   (f: Future[T])
@@ -18,6 +19,6 @@ trait BookDirectives extends Directives {
   }
 
   def handleWithGeneric[T](f: Future[T]): Directive1[T] =
-    handle[T](f)(_ => ApiError(400, "Something went wrong"))
+    handle[T](f)(_ => ApiError(errorCode, "Something went wrong"))
 
 }

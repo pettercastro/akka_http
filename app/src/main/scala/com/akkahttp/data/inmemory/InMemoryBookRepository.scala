@@ -2,16 +2,16 @@ package com.akkahttp.data.inmemory
 
 import java.util.UUID
 
-import com.akkahttp.models.{Book, CreateBook, UpdateBook}
 import com.akkahttp.data.BookRepository
+import com.akkahttp.models.{Book, CreateBook, UpdateBook}
 import scala.concurrent.{ExecutionContext, Future}
 
 case class BookNotFound(id: String) extends Throwable(s"Book not found $id")
 
-class InMemoryBookRepository(initialBooks: Seq[Book] = Seq.empty)(implicit ec: ExecutionContext) extends BookRepository {
+class InMemoryBookRepository(initialBooks: Seq[Book] = Seq.empty)
+                            (implicit ec: ExecutionContext) extends BookRepository {
 
   private var books: Vector[Book] = initialBooks.toVector
-
 
   override def find(id: String): Future[Option[Book]] = Future.successful(books.find(_.id == id))
 
@@ -59,5 +59,4 @@ class InMemoryBookRepository(initialBooks: Seq[Book] = Seq.empty)(implicit ec: E
         Future.failed(BookNotFound(id))
     }
   }
-
 }

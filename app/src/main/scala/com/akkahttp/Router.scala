@@ -1,13 +1,15 @@
 package com.akkahttp
 
-import akka.http.scaladsl.server._
-import io.swagger.annotations.{Api, ApiOperation}
 import javax.ws.rs.Path
+
 import scala.util.{Failure, Success}
 
-import com.akkahttp.models.{Book, Cat, CreateBook, CreateCat, UpdateBook}
+import akka.http.scaladsl.server._
 import com.akkahttp.data.{BookRepository, CatRepository}
-
+import com.akkahttp.marshallers.JsonApiSupport._
+import com.akkahttp.models.{Book, Cat, CreateBook, CreateCat, UpdateBook}
+import io.swagger.annotations.{Api, ApiOperation}
+import org.zalando.jsonapi.json.akka.http.AkkaHttpJsonapiSupport._
 
 final case class Test(name: String, lastName: String)
 
@@ -16,8 +18,8 @@ final case class MyCustomRejection(parameterName: String, errorMsg: String, caus
 
 @Path("/books")
 @Api(produces = "application/json")
-class Router(bookRepository: BookRepository, catRepository: CatRepository) extends BookDirectives with ValidatorDirectives{
-
+class Router(bookRepository: BookRepository, catRepository: CatRepository)
+  extends BookDirectives with ValidatorDirectives{
 //  var rejectionHandler =
 //    RejectionHandler
 //      .newBuilder()
@@ -26,9 +28,6 @@ class Router(bookRepository: BookRepository, catRepository: CatRepository) exten
 //      }.handleAll[MyCustomRejection] { rejections =>
 //        complete(404, rejections.map(_.errorMsg))
 //      }.result()
-
-  import com.akkahttp.marshallers.JsonApiSupport._
-  import org.zalando.jsonapi.json.akka.http.AkkaHttpJsonapiSupport._
 
 //  def temporalDirective(): Directive0 = {
 //    reject(ValidationRejection(""), MyCustomRejection("seoncd error","bbb"))

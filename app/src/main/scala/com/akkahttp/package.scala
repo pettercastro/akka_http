@@ -1,5 +1,3 @@
 package com
 
-package object akkahttp {
-
-}
+package object akkahttp
